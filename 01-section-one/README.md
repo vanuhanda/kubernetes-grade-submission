@@ -1,4 +1,6 @@
 
+   # Repo Layout
+   
     01-section-one-pods-and-sidecars/
     ├── grade-submission-portal-pod.yaml
     ├── grade-submission-api-pod.yaml
@@ -57,6 +59,9 @@ The frontend Pod is created using a Pod manifest containing two containers.
 ```bash
 kubectl apply -f grade-submission-portal-pod.yaml
 ```
+
+![alt text](Screenshots/grade-submission-portal-pod-created.png)
+
 Pods created
 
 
@@ -66,6 +71,7 @@ Port forwarding is used to access the frontend application locally without creat
 ```
 kubectl port-forward grade-submission-portal 8080:5001
 ```
+![alt text](Screenshots/grade-submission-portal-port-forward.png)
 
 Port forwarding active
 
@@ -78,10 +84,14 @@ Main application container logs
 ```
 kubectl logs -f grade-submission-portal -c grade-submission-portal
 ```
+
+![alt text](Screenshots/grade-submission-portal-container-logs.png)
+
 Health checker sidecar container logs
 ```
 kubectl logs -f grade-submission-portal -c grade-submission-portal-health-checker
 ```
+![alt text](grade-submission-portal-health-checker-container-logs.png)
 
 Backend Pod Creation
 
@@ -89,13 +99,16 @@ The backend Pod is created with a stateless API container and a health-checker s
 ```
 kubectl apply -f grade-submission-api-pod.yaml
 ```
+![alt text](Screenshots/grade-submission-api-pod-created.png)
+
 Backend Health Checker Logs
 ```
 kubectl logs -f grade-submission-api -c grade-submission-api-health-checker
 ```
+![alt text](Screenshots/grade-submission-api-health-checker-container-logs.png)
 
-Kubernetes Concepts Demonstrated
-Pods
+# Kubernetes Concepts Demonstrated
+## Pods
 
 Pods are the smallest deployable units in Kubernetes
 
@@ -103,7 +116,7 @@ Kubernetes schedules Pods as a single atomic unit
 
 Containers inside a Pod are always co-located
 
-Multi-Container Pods (Sidecar Pattern)
+## Multi-Container Pods (Sidecar Pattern)
 
 Sidecar containers run alongside the main application container
 
@@ -117,7 +130,7 @@ Communication happens via localhost
 
 Common real-world sidecars include logging agents, monitoring exporters, and security tools
 
-Resource Requests and Limits
+## Resource Requests and Limits
 
 Each container defines CPU and memory requirements.
 
@@ -131,7 +144,7 @@ Memory request and limit are set equal to prevent overcommit
 
 CPU limits are defined for learning purposes
 
-Port Forwarding
+## Port Forwarding
 
 Creates a temporary tunnel between the local machine and the Pod
 
@@ -172,3 +185,7 @@ Sidecars enhance applications without code changes
 Port forwarding provides safe, temporary debugging access
 
 Most Kubernetes behavior happens behind the scenes and is observed via CLI
+
+## Frontend
+
+![alt text](Screenshots/frontend.png)

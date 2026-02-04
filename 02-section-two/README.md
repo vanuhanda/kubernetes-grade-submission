@@ -43,6 +43,8 @@ The application consists of:
 - Service type: **ClusterIP**
 - Accessible only inside the cluster
 
+![alt text](Screenshots/sectiontwo.png)
+
 ---
 
 ## Frontend – NodePort Service

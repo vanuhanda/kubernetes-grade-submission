@@ -48,6 +48,7 @@ All containers inside a Pod:
 - Share the same IP address
 - Communicate using `localhost`
 
+![alt text](Screenshots/sectionone.png)
 ---
 
 ## Frontend Pod
@@ -189,3 +190,6 @@ Most Kubernetes behavior happens behind the scenes and is observed via CLI
 ## Frontend
 
 ![alt text](Screenshots/frontend.png)
+
+
+

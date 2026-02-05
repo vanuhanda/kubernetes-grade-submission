@@ -11,7 +11,7 @@
 │   ├── kubectl-get-deployments.png
 │   ├── kubectl-get-pods.png
 │   ├── kubectl-pods-deletion-and-auto-creation.png
-├   ├── section-four.png
+│   ├── section-four.png
 └── README.md
 ```
 
@@ -55,6 +55,7 @@ In this section:
 
 All resources run inside the `grade-submission` namespace.
 
+![alt text](Screenshots/section-four.png)
 ---
 
 ## Step 1 – Apply Deployment Manifests
@@ -72,10 +73,11 @@ kubectl apply -f .
 
 * The Deployment Controller is notified of a new desired state
 
-## Step 2 – Inspect Deployments
+## Step 1 – Inspect Deployments
 ```
 kubectl get deployments -n grade-submission
 ```
+![alt text](Screenshots/kubectl-get-deployments.png)
 ### Behind the Scenes
 
 * The Deployment Controller creates a ReplicaSet
@@ -146,3 +148,40 @@ kubectl get pods -n grade-submission
 * Scheduler assigns Pods to nodes
 
 * Kubelet ensures containers are running as specified
+
+## Why Deployments matter
+### Without Deployments
+
+* Pod failures cause downtime
+
+* Manual intervention is required
+
+* Scaling is error-prone
+
+### With Deployments
+
+* Failures are handled automatically
+
+* Desired state is enforced continuously
+
+* Applications become resilient by default
+
+### Commands Used
+```
+kubectl apply -f .
+kubectl get deployments -n grade-submission
+kubectl get pods -n grade-submission
+kubectl delete pod grade-submission-api-6949948d85-7wcqq -n grade-submission
+kubectl get pods -n grade-submission
+```
+# Key Takeways
+
+* Deployments declare desired application state
+
+* ReplicaSets enforce replica availability
+
+* Pods are ephemeral and replaceable
+
+* Self-healing is automatic and continuous
+
+* Developers describe intent; Kubernetes enforces reality

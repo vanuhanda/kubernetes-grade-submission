@@ -11,6 +11,7 @@
 │   ├── portal-ui-grades.png
 │   ├── pods-created.png
 │   ├── pods-and-services.png
+│   ├── sectiontwo.png
 └── README.md
 ```
 # Section 02 – Kubernetes Services (NodePort & ClusterIP)

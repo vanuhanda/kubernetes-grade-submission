@@ -14,6 +14,7 @@
 │   ├── delete-resources-namespace.png
 │   ├── recreate-resources-with-namespace.png
 │   ├── final-state-namespace.png
+│   ├── sectionthree.png
 └── README.md
 ```
 # Section 03 – Kubernetes Namespaces

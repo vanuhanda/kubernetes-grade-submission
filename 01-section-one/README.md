@@ -13,6 +13,7 @@
     │   ├── portal-health-checker-logs.png
     │   ├── api-pod-created.png
     │   ├── api-health-checker-logs.png
+    │   ├── sectionone.png
     └── README.md
 
 

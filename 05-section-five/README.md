@@ -1,187 +1,231 @@
 
 # Repo Layout
 ```
-04-section-four-deployments-and-self-healing/
+05-section-five-rolling-updates-and-rollbacks
 ├── grade-submission-api-deployment.yaml
 ├── grade-submission-api-service.yaml
 ├── grade-submission-portal-deployment.yaml
 ├── grade-submission-portal-service.yaml
 ├── Screenshots/
-│   ├── kubectl-apply.png
-│   ├── kubectl-get-deployments.png
-│   ├── kubectl-get-pods.png
-│   ├── kubectl-pods-deletion-and-auto-creation.png
-│   ├── section-four.png
+│   ├── kubectl-grade-submission-api-deployment-rollback-successful.png
+│   ├── kubectl-grade-submission-api-deployment-rollback.png
+│   ├── kubectl-grade-submission-api-deployment-stateful-with-strategy.png
+│   ├── kubectl-grade-submission-api-deployment-stateful.png
+│   ├── section-five.png
 └── README.md
 ```
 
-# Section 04 – Deployments, ReplicaSets & Self-Healing
+# Section 05 – Rolling Updates & Rollbacks
 
 ## Overview
-Running Pods directly works, but it does not provide resilience.  
-If a Pod crashes, it must be recreated manually.
+Upgrading applications in production is risky if not handled carefully.
 
-This section introduces **Deployments**, which allow Kubernetes to:
-- Maintain a desired number of Pods
-- Automatically replace failed Pods
-- Manage application lifecycle declaratively
+If all running Pods are terminated at once during an update, the result is **downtime**.
+Kubernetes solves this problem using **rolling updates** and **rollbacks**, managed automatically by the Deployment controller.
 
-The application code remains unchanged.  
-Only the **control mechanism** changes.
+In this section, application updates were intentionally broken and then safely recovered to observe Kubernetes behavior.
 
 ---
 
-## From Pods to Deployments
+## What changed in this section
 
-In earlier sections, Pods were created directly.  
-In this section:
-- Pod manifests were replaced with **Deployment manifests**
-- Desired replica counts were declared
-- Kubernetes took responsibility for Pod lifecycle management
+- Modified the backend Deployment to use a different container image
+- Observed application failure after the update
+- Rolled back the Deployment to a previous working version
+- Added a custom rolling update strategy
+- Observed controlled Pod replacement during updates
 
 ---
 
 ## Application Architecture
 
-### Backend
-- Resource type: **Deployment**
-- Replicas: `2`
-- Service type: **ClusterIP**
+![alt text](Screenshots/section-five.png)
 
-### Frontend
-- Resource type: **Deployment**
-- Replicas: `1`
-- Service type: **NodePort**
-
-All resources run inside the `grade-submission` namespace.
-
-![alt text](Screenshots/section-four.png)
 ---
 
-## Step 1 – Apply Deployment Manifests
-
-
+## Step 1 - Introducing a Breaking Change
 ```bash
-kubectl apply -f .
+rslim087/kubernetes-course-grade-submission-api:stateless
+```
+to: 
+```
+rslim087/kubernetes-course-grade-submission-api:stateful
+```
+```
+kubectl apply -f grade-submission-api-deployment.yaml
 ```
 
-![alt text](Screenshots/kubectl-apply.png)
+![alt text](Screenshots/kubectl-grade-submission-api-deployment-stateful.png)
+
+Deployment is now updated
+
+## Observed Behavior
+
+- Frontend stopped responding
+
+- Backend Pods were running, but application behavior was incorrect
+
+## Behind the Scenes
+
+- Kubernetes successfully rolled out the new Pods
+
+- The platform had no knowledge that the application logic was broken
+
+- From Kubernetes’ perspective, the desired state was satisfied
+
+
+## Step 2 - Roll Back the Deployment
+
+To recover, the Deployment was rolled back:
+
+```
+kubectl rollout undo deployment/grade-submission-api -n grade-submission
+```
+Rollback initiated
+
+![alt text](Screenshots/kubectl-grade-submission-api-deployment-rollback.png)
+
+Rollback successful
+
 
 ### Behind the Scenes
 
-* Kubernetes stores the Deployment specification in etcd
+- Kubernetes retained the previous ReplicaSet
 
-* The Deployment Controller is notified of a new desired state
+- The faulty ReplicaSet was scaled down
 
-## Step 1 – Inspect Deployments
-```
-kubectl get deployments -n grade-submission
-```
-![alt text](Screenshots/kubectl-get-deployments.png)
-### Behind the Scenes
+- A new ReplicaSet using the previous image was scaled up
 
-* The Deployment Controller creates a ReplicaSet
+- Pods were replaced gradually using a rolling strategy
 
-* The ReplicaSet represents the exact replica requirements
+## Step 3 - Observe Pod Transitions
 
-* Availability and readiness are tracked continuously
-
-## Step 2 – Observe Created Pods 
 ```
 kubectl get pods -n grade-submission
 ```
-### Pods created by ReplicaSet
-![alt text](Screenshots/kubectl-get-pods.png)
+![alt text](Screenshots/kubectl-grade-submission-api-deployment-rollback-successful.png)
+
+During the rollback and updates:
+
+- Old Pods entered `Terminating` state
+
+- New Pods entered `ContainerCreating` and then `Running`
+
+- Service traffic was continuously routed to healthy Pods
 
 ### Behind the Scenes
 
-* The ReplicaSet Controller creates Pods to match the desired replica count
+- Two ReplicaSets briefly coexisted
 
-* Pod names include a hash derived from the pod template
+- The Service continued routing traffic using labels
 
-* Pods are not owned directly by the Deployment, but by the ReplicaSet
+- At no point were all Pods unavailable
 
 
-## Step 4 – Trigger Self-Healing
+## Step 4 - Configure Rolling Update Strategy
 
-To test self-healing, one backend Pod was deleted manually:
+A rolling update strategy was added to the Deployment:
 ```
-kubectl delete pod grade-submission-api-6949948d85-7wcqq -n grade-submission
-```
-```
-kubectl get pods -n grade-submission
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 50%
+    maxSurge: 1
 ```
 
-### Pod deleted and recreated automatically
+Meaning of these values
 
-![alt text](Screenshots/kubectl-pods-deletion-and-auto-creation.png)
+- `maxUnavailable: 50%`
+
+    At least one Pod must always remain available
+
+- `maxSurge: 1`
+
+    Allows one extra Pod above the desired replica count
+
+## Step 5 - Observe Controlled Rolling Update
+
+After applying the strategy and reapplying the Deployment:
+```
+kubectl apply -f grade-submission-api-deployment.yaml
+```
+
+Rolling update without strategy
+
+
+Rolling update with strategy
+
+![alt text](Screenshots/kubectl-grade-submission-api-deployment-stateful-with-strategy.png)
+
 
 ### Behind the Scenes
 
-* ReplicaSet Controller detects fewer running Pods than desired
+- Kubernetes created a new ReplicaSet for the updated template
 
-* A new Pod is created immediately
+- Old Pods were terminated gradually
 
-* No manual intervention is required
+- New Pods were created within defined limits
 
-* The desired state is restored automatically
+- Availability was preserved throughout the process
 
-## Kubernetes Controllers Involved
-### Deployment Controller
 
-* Manages the overall application lifecycle
+### How Rolling Updates Work Internally
 
-* Creates and updates ReplicaSets
+- Deployment template changes
 
-* Handles rollout and rollback strategies
+- A new ReplicaSet is created
 
-### ReplicaSet Controller
+- Old ReplicaSet is scaled down gradually
 
-* Ensures the desired number of Pods are always running
+- New ReplicaSet is scaled up gradually
 
-* Watches Pod state continuously
+- Traffic is always routed to available Pods
 
-* Recreates Pods on failure
 
-### Scheduler & Kubelet
+### Rollbacks Explained
+When a rollback is triggered:
 
-* Scheduler assigns Pods to nodes
+- Kubernetes does not “rewind” Pods
 
-* Kubelet ensures containers are running as specified
+- It creates a new ReplicaSet using the previous configuration
 
-## Why Deployments matter
-### Without Deployments
+- The same rolling strategy is used during rollback
 
-* Pod failures cause downtime
+This ensures:
 
-* Manual intervention is required
+- Minimal downtime
 
-* Scaling is error-prone
-
-### With Deployments
-
-* Failures are handled automatically
-
-* Desired state is enforced continuously
-
-* Applications become resilient by default
+- Safe recovery from faulty releases
 
 ### Commands Used
 ```
-kubectl apply -f .
-kubectl get deployments -n grade-submission
+kubectl apply -f grade-submission-api-deployment.yaml
 kubectl get pods -n grade-submission
-kubectl delete pod grade-submission-api-6949948d85-7wcqq -n grade-submission
+kubectl rollout undo deployment/grade-submission-api -n grade-submission
+kubectl get pods -n grade-submission
+kubectl apply -f grade-submission-api-deployment.yaml
 kubectl get pods -n grade-submission
 ```
+
 # Key Takeways
 
-* Deployments declare desired application state
+- Rolling updates prevent downtime during upgrades
 
-* ReplicaSets enforce replica availability
+- Deployments manage multiple ReplicaSets automatically
 
-* Pods are ephemeral and replaceable
+- Rollbacks are first-class citizens in Kubernetes
 
-* Self-healing is automatic and continuous
+- maxUnavailable and maxSurge control update safety
 
-* Developers describe intent; Kubernetes enforces reality
+- Kubernetes enforces availability, not application correctness
+
+- Safe releases require both platform guarantees and application validation
+
+# Why this section is a big deal
+
+This section proves you understand:
+
+- Zero-downtime deployments
+- Failure recovery in production
+- Declarative state transitions
+- Controller-driven orchestration

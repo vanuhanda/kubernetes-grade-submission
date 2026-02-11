@@ -20,9 +20,13 @@
 │   └── mongodb-service.yaml
 │
 ├── Screenshots
-│   ├── mongodb-secret.yaml
-│   ├── mongodb-statefulset.yaml
-│   └── mongodb-service.yaml
+│   ├── base-64.png
+│   ├── grade-api.png
+│   ├── grade-portal.png
+│   ├── kubectl-apply-api.png
+│   ├── kubectl-apply-mongodb.png
+│   ├── kubectl-apply-portal.png
+│   └── section-eight.png
 │
 └── README.md
 ```

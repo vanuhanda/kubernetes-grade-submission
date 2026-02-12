@@ -32,7 +32,7 @@
 ```
 
 
-# Section 07 - ConfigMaps & Secrets (Decoupling Configuration from Code)
+# Section 08 - ConfigMaps & Secrets (Decoupling Configuration from Code)
 
 ## Overview
 This section focuses on externalizing configuration and secrets from application manifests using ConfigMaps and Secrets, following Kubernetes best practices for security, portability, and maintainability.

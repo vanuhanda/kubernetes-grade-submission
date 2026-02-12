@@ -1,8 +1,7 @@
 
 # Repo Layout
 ```
-08-section-eight-Config Maps and Secrets
-
+09-section-nine-HPA
 ├── grade-submission-api/
 │   ├── grade-submission-api-config.yaml
 │   ├── grade-submission-api-secret.yaml
@@ -34,7 +33,7 @@
 ```
 
 
-# Section 08 - Horizontal Pod Autoscaling (HPA)
+# Section 09 - Horizontal Pod Autoscaling (HPA)
 
 ## Overview
 
@@ -83,7 +82,10 @@ kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/late
 ```
 Since this is a local Docker Desktop cluster, kubelet TLS verification was disabled:
 ```
-Since this is a local Docker Desktop cluster, kubelet TLS verification was disabled:
+kubectl patch deployment metrics-server -n kube-system \
+--type='json' \
+-p='[{"op":"add","path":"/spec/template/spec/containers/0/args/-","value":"--kubelet-insecure-tls"}]'
+
 ```
 ![alt text](Screenshots/1-metric-server-installation.png)
 
@@ -237,163 +239,3 @@ How HPA Actually Works
 - Frontend scaling protects backend stability
 
 - Kubernetes acts as a closed-loop control system
-
-
-
-### Configuration Flow
-
-## Frontend
-
-- Reads backend hostname from ConfigMap
-
-## Backend
-
-- Reads DB host/port from ConfigMap
-
-- Reads DB credentials from Secret
-
-## Database
-
-- Reads root credentials from Secret
-
-- Persists data using PVC
-
-![alt text](Screenshots/section-eight.png)
-
-
-### What Changed in This Section
-
-## 1️⃣ Environment Variables Removed from Deployments
-
-- No more hardcoded `env:` blocks
-
-- All configuration moved to:
-
-  - ConfigMaps → non-sensitive data
-
-  - Secrets → credentials
-
-
-## 2️⃣ ConfigMaps Introduced
-
-Backend ConfigMap
-```
-kind: ConfigMap
-data:
-  MONGODB_HOST: mongodb
-  MONGODB_PORT: "27017"
-```
-
-Frontend ConfigMap
-```
-kind: ConfigMap
-data:
-  GRADE_SERVICE_HOST: grade-submission-api
-```
-
-## 3️⃣ Secrets Introduced (Base64 Encoded)
-```
-echo -n 'admin' | base64
-echo -n 'password123' | base64
-```
-```
-kind: Secret
-type: Opaque
-data:
-  MONGODB_USER: YWRtaW4=
-  MONGODB_PASSWORD: cGFzc3dvcmQxMjM=
-```
-![alt text](Screenshots/base-64.png)
-
-## 4️⃣ envFrom Used in Pods
-```
-envFrom:
-  - configMapRef:
-      name: grade-submission-api-config
-  - secretRef:
-      name: grade-submission-api-secret
-```
-This keeps:
-
-- YAML clean
-
-- Configuration reusable
-
-- Secrets invisible in pod specs
-
-## ▶️ Deployment Order (Important)
-
-```
-kubectl apply -f mongodb/
-kubectl apply -f grade-submission-api/
-kubectl apply -f grade-submission-portal/
-```
-
-
-## 🔍 Verification
-
-```
-kubectl get pods -n grade-submission
-kubectl logs -f <api-pod> -n grade-submission
-```
-
-Expected Logs:
-```
-Attempting to connect to MongoDB...
-Connected to MongoDB
-```
-![alt text](Screenshots/kubectl-apply-mongodb.png)
-![alt text](Screenshots/kubectl-apply-api.png)
-![alt text](Screenshots/kubectl-apply-portal.png)
-
-# 🧠 Behind the Scenes (What Kubernetes Does)
-
-ConfigMaps
-
-- Inject values as environment variables at runtime
-
-- Allow config changes without rebuilding images
-
-- Enable environment-specific overrides
-
-
-Secrets
-
-- Stored separately from application code
-
-- Base64 encoded (⚠️ not encrypted)
-
-- Mounted securely into pods
-
-Why This Matters
-
-- Clean separation of code vs configuration
-
-- Safer credential handling
-
-- Easier CI/CD and environment promotion
-
-- Production-aligned Kubernetes design
-
-⚠️ Security Note
-
-Kubernetes Secrets are not encrypted by default.
-
-In real environments:
-
-- Enable encryption at rest
-
-- Use external secret managers (Vault, AWS Secrets Manager, etc.)
-
-- Restrict RBAC access to Secrets
-
-✅ Key Takeaways
-
-- ConfigMaps handle configuration
-
-- Secrets handle credentials
-
-- Deployments should never contain secrets directly
-
-- Kubernetes encourages declarative, portable, secure design
-

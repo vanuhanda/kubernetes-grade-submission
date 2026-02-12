@@ -27,9 +27,11 @@
 │   ├── 5-flooded-requests-on-portal.png
 │   ├── 6-kubectl-hpa-result.png
 │   ├── 7-hpa-successful.png
-│   └── 7-hpa-scaled-down.png
+│   ├── 8-hpa-scaled-down.png
+│   └── 9-section-nine.png
 │
 └── README.md
+
 ```
 
 
@@ -65,6 +67,8 @@ Key Points
 - API and MongoDB remain stable to isolate scaling behavior.
 
 - Metrics Server feeds CPU metrics to the HPA control loop.
+
+![alt text](Screenshots/9-section-nine.png)
 
 ### 🛠️ Prerequisites
 - Kubernetes cluster running on Docker Desktop (Windows)

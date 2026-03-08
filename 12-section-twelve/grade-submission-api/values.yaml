@@ -12,5 +12,5 @@ workload: ## container specific configurations
   livenessDelay: 15
 
 secrets: ## sensitive data
-  MONGODB_URI: 'mongodb://localhost:27017/' 
+  MONGODB_URI: 'mongodb://mongodb.mongodb.svc.cluster.local:27017/' 
   
